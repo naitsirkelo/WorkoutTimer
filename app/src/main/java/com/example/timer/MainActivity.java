@@ -1,7 +1,7 @@
 package com.example.timer;
 
 import android.content.Intent;
-import android.graphics.Color;
+import android.media.MediaPlayer;
 import android.os.CountDownTimer;
 import android.os.Handler;
 import android.support.v7.app.AppCompatActivity;
@@ -20,48 +20,55 @@ public class MainActivity extends AppCompatActivity {
     ImageView backgroundImg;
     TextView showTimer, showRoundStation;
     Spinner workSpinner, pauseSpinner, roundsSpinner, stationsSpinner;
-    int workTime = 1, pauseTime = 1, roundsVal = 1, roundsCount = 0, stationsVal = 1 , stationsCount = 0;
+    int workTime = 1, pauseTime = 1, roundsVal = 1, roundsCount = 0, stationsVal = 1, stationsCount = 0;
+    MediaPlayer pause_end, work_end;
+    boolean mute = false;
 
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
-
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+
 
         showTimer = findViewById(R.id.timer_text);
         showRoundStation = findViewById(R.id.r_s_text);
         backgroundImg = findViewById(R.id.bg);
         sendViewToBack(backgroundImg);
-        backgroundImg.setBackgroundColor(Color.parseColor("#88EA6C"));
+        backgroundImg.setBackgroundColor(getResources().getColor(R.color.app_green));
+        work_end = MediaPlayer.create(this, R.raw.work_end);
+        pause_end = MediaPlayer.create(this, R.raw.beep_countdown);
+
 
         if (timer == null) {
-            showTimer.setText("0.0");
-            showRoundStation.setText("R:0/0 S:0/0");
+            showTimer.setText(R.string.timer_start);
+            showRoundStation.setText(R.string.rounds_stations);
         }
 
         Button start = findViewById(R.id.start_btn);
         Button reset = findViewById(R.id.reset_btn);
+        final Button sound = findViewById(R.id.sound_btn);
 
-        Integer[] seconds = new Integer[]{1, 2, 3, 4, 5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55, 60};
+
+        Integer[] seconds = new Integer[]{5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55, 60};
         Integer[] rounds = new Integer[]{2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20};
         Integer[] stations = new Integer[]{2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12};
 
 
         workSpinner = findViewById(R.id.work_spinner);
-        ArrayAdapter<Integer> work_adapter = new ArrayAdapter<Integer>(this, android.R.layout.simple_spinner_item, seconds);
+        ArrayAdapter<Integer> work_adapter = new ArrayAdapter<>(this, android.R.layout.simple_spinner_item, seconds);
         workSpinner.setAdapter(work_adapter);
 
         pauseSpinner = findViewById(R.id.pause_spinner);
-        ArrayAdapter<Integer> pause_adapter = new ArrayAdapter<Integer>(this, android.R.layout.simple_spinner_item, seconds);
+        ArrayAdapter<Integer> pause_adapter = new ArrayAdapter<>(this, android.R.layout.simple_spinner_item, seconds);
         pauseSpinner.setAdapter(pause_adapter);
 
         roundsSpinner = findViewById(R.id.rounds_spinner);
-        ArrayAdapter<Integer> rounds_adapter = new ArrayAdapter<Integer>(this, android.R.layout.simple_spinner_item, rounds);
+        ArrayAdapter<Integer> rounds_adapter = new ArrayAdapter<>(this, android.R.layout.simple_spinner_item, rounds);
         roundsSpinner.setAdapter(rounds_adapter);
 
         stationsSpinner = findViewById(R.id.stations_spinner);
-        ArrayAdapter<Integer> stations_adapter = new ArrayAdapter<Integer>(this, android.R.layout.simple_spinner_item, stations);
+        ArrayAdapter<Integer> stations_adapter = new ArrayAdapter<>(this, android.R.layout.simple_spinner_item, stations);
         stationsSpinner.setAdapter(stations_adapter);
 
 
@@ -119,7 +126,7 @@ public class MainActivity extends AppCompatActivity {
                                         String t = "R:" + jjj + "/" + r + " S:" + ii + "/" + s;
                                         showRoundStation.setText(t);
 
-                                        backgroundImg.setBackgroundColor(Color.parseColor("#FF270F"));
+                                        backgroundImg.setBackgroundColor(getResources().getColor(R.color.app_red));
                                         startTimer(w);
 
                                         final Handler handler = new Handler();
@@ -130,10 +137,36 @@ public class MainActivity extends AppCompatActivity {
 
                                                 stationsCount = ii;
                                                 roundsCount = jj + 1;
-                                                backgroundImg.setBackgroundColor(Color.parseColor("#88EA6C"));
+                                                backgroundImg.setBackgroundColor(getResources().getColor(R.color.app_green));
                                                 startTimer(p);
+
+                                                // Counting down to when the pause_end sound will play.
+                                                final Handler handler_sound = new Handler();
+                                                handler_sound.postDelayed(new Runnable() {
+                                                    @Override
+                                                    public void run() {
+
+                                                        if (!mute) {    // Play sound if not muted.
+                                                            playSound(pause_end);
+                                                        }
+
+                                                    }
+                                                }, p - 3000);
                                             }
                                         }, w);
+
+                                        // Counting down to when the work_end sound will play.
+                                        final Handler handler_sound = new Handler();
+                                        handler_sound.postDelayed(new Runnable() {
+                                            @Override
+                                            public void run() {
+
+                                                if (!mute) {    // Play sound if not muted.
+                                                    playSound(work_end);
+                                                }
+
+                                            }
+                                        }, w - 600);
                                     }
                                 }, j * (workTime + pauseTime));
                             }
@@ -148,13 +181,69 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onClick(View view) {
 
+                stopSound();
+
                 Intent intent = getIntent();
-                overridePendingTransition( 0, 0);
+                overridePendingTransition(0, 0);
                 finish();
                 startActivity(intent);
-                overridePendingTransition( 0, 0);
+                overridePendingTransition(0, 0);
             }
         });
+
+
+        sound.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                mute = !mute;   // Invert boolean when icon is clicked.
+
+                if (mute) {
+                    sound.setBackgroundResource(R.drawable.mute);
+                    stopSound();    // Stopping both MediaPlayers.
+
+                } else {
+                    sound.setBackgroundResource(R.drawable.sound);
+                }
+            }
+        });
+
+
+        pause_end.setOnCompletionListener(new MediaPlayer.OnCompletionListener() {
+            public void onCompletion(MediaPlayer mp) {
+                pause_end.release();
+            }
+        });
+
+
+        work_end.setOnCompletionListener(new MediaPlayer.OnCompletionListener() {
+            public void onCompletion(MediaPlayer mp) {
+                work_end.release();
+            }
+        });
+    }
+
+
+    void playSound(MediaPlayer mp) {
+        if (mp != null && mp.isPlaying()) {
+            mp.stop();
+            mp.reset();
+        }
+        assert mp != null;
+        mp.start();
+    }
+
+
+    void stopSound() {
+        if (pause_end != null) {
+            pause_end.stop();
+            pause_end.release();
+            pause_end = null;
+        }
+        if (work_end != null) {
+            work_end.stop();
+            work_end.release();
+            work_end = null;
+        }
     }
 
 
@@ -163,12 +252,13 @@ public class MainActivity extends AppCompatActivity {
         timer = new CountDownTimer(t, 1) {
 
             public void onTick(long millisUntilFinished) {
-                showTimer.setText(millisUntilFinished / 1000 + "." + ((millisUntilFinished / 100) % 10));
+                String time = millisUntilFinished / 1000 + "." + ((millisUntilFinished / 100) % 10);
+                showTimer.setText(time);
             }
 
             public void onFinish() {
                 if (roundsCount == roundsVal && stationsCount == stationsVal) {
-                    showTimer.setText("Finished!");
+                    showTimer.setText(R.string.timer_end);
                 }
             }
         };

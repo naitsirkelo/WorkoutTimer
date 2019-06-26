@@ -1,0 +1,7 @@
+#Internal package file, do not edit.
+#Wed Jun 26 23:27:05 CEST 2019
+0.baseType=DIRECTORY
+0.base=/Users/oleklarsen/AndroidStudioProjects/WorkoutTimer/app/build/intermediates/dex/debug/mergeDexDebug/out
+0.path=classes.dex
+0.set=DEX
+count=1
