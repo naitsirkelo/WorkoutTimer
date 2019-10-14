@@ -1,4 +1,4 @@
-# UltimateRSS
+# Workout Timer
 <!-- PROJECT SHIELDS -->
 <!--
 *** I'm using markdown "reference style" links for readability.
@@ -16,7 +16,7 @@
 <br />
 <p align="center">
   <a href="https://github.com/naitsirkelo/WorkoutTimer">
-    <img src="app/src/main/res/drawable/pixel_clock.png" alt="Logo" width="400" height="400">
+    <img src="app/src/main/res/drawable/pixel_clock.png" alt="Logo" width="200" height="200">
   </a>
 </p>
 
